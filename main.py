@@ -7,6 +7,8 @@ from constants import *
 
 
 def process_command(args):
+    """Метод выборает команду на обработку в зависимости от входящих аргументов"""
+
     if args.posts:
         show_posts(args.domain)
     if args.comments:
@@ -16,6 +18,22 @@ def process_command(args):
 
 
 def show_posts(domain):
+    """Метод находит топ-10 постов по количеству лайков на основе 100 последних постов,
+        записывает результат в форме [место / количество лайков / текст поста] в файл output.txt
+
+        Parameters
+        ----------
+        domain: str
+            короткое имя группы ВК
+
+        Raises
+        ------
+        ConnectionError
+            При ошибке подключения
+        KeyError
+            При ошибке обращения к словарю
+    """
+
     try:
         data = get_posts(domain)
         min_value = 0
@@ -47,6 +65,22 @@ def show_posts(domain):
 
 
 def show_comments(domain):
+    """Метод находит топ-10 комментариев по количеству лайков на основе 100 последних постов,
+        записывает результат в форме [место / количество лайков / текст комментария] в файл output.txt
+
+        Parameters
+        ----------
+        domain: str
+            короткое имя группы ВК
+
+        Raises
+        ------
+        ConnectionError
+            При ошибке подключения
+        KeyError
+            При ошибке обращения к словарю
+    """
+
     try:
         data = get_posts(domain)
         min_value = 0
@@ -81,6 +115,21 @@ def show_comments(domain):
 
 
 def show_description(domain):
+    """Метод находит описание группы ВК, записывает результат в файл output.txt
+
+        Parameters
+        ----------
+        domain: str
+            короткое имя группы ВК
+
+        Raises
+        ------
+        ConnectionError
+            При ошибке подключения
+        KeyError
+            При ошибке обращения к словарю
+    """
+
     try:
         response = requests.get(request_pattern + "groups.getById", params={
             "access_token": token,
@@ -100,6 +149,23 @@ def show_description(domain):
 
 
 def append_item_and_sort(my_list, item):
+    """Метод добавляет переданный элемент item в словарь my_list, а затем сортирует элементы по количеству лайков
+
+    Parameters
+    ----------
+    my_list: []
+        список постов/комментариев
+    item: пост/комментарий, представленный словарем
+        элемент на добавление в список
+
+    Returns
+    ----------
+    min_value: int
+        минимальное количество лайков среди всех элементов в итоговом списке
+    bottom_item: dict
+        минимальный по количеству лайков элемент в итоговом списке
+    """
+
     my_list.append(item)
     my_list.sort(key=lambda x: x["likes"]["count"])
     min_value = my_list[0]["likes"]["count"]
@@ -108,6 +174,18 @@ def append_item_and_sort(my_list, item):
 
 
 def get_posts(domain):
+    """Метод получения 100 постов со стены группы ВК
+
+        Parameters
+        ----------
+        domain: str
+            короткое имя группы ВК
+
+        Returns
+        ----------
+        result: json
+            json объект, содержащий 100 постов
+    """
     response = requests.get(request_pattern + "wall.get",
                             params={"access_token": token,
                                     "v": version,
@@ -117,6 +195,23 @@ def get_posts(domain):
 
 
 def get_comments(post_id, owner_id, comments_count):
+    """Метод получения комментариев из указанного поста со стены группы ВК
+
+        Parameters
+        ----------
+        post_id: int
+            id поста
+        owner_id: int
+            id группы ВК
+        comments_count: int
+            количество комментариев, которые нужно вернуть
+
+        Returns
+        ----------
+        result: json
+            json объект, содержащий comments_count комментариев
+    """
+
     response = requests.get(request_pattern + "wall.getComments",
                             params={
                                 "access_token": token,
@@ -129,11 +224,14 @@ def get_comments(post_id, owner_id, comments_count):
     return response.json()["response"]["items"]
 
 
-def write_result():
-    pass
-
-
 def main():
+    """Метод определяет обрабатывает входящие аргументы. При отсутствии параметров -p/-c/-d завершает работу скрипта
+
+        Raises
+        ------
+        Exception
+            При ошибке, вознишкей в методе process_command()
+    """
     script_name = os.path.basename(sys.argv[0])
     parser = argparse.ArgumentParser(usage=f'{script_name} [OPTIONS] DOMAIN')
     parser.add_argument(
